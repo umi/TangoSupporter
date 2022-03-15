@@ -115,18 +115,22 @@ export default {
 		},
 		search() {
 			const str = this.$refs.searchInput.value
-			const searchStr = _.uniq(this.h2k(str).split('')).join('')
-			const mergeIndex = _.transform(searchStr.split(''), (res, val) => {
-				if(typeof this.listIndex[6][val] !== 'undefined'){
-					res[0] = _.concat((res[0]||[]), this.listIndex[6][val])
+			const searchStrList = _.groupBy(this.h2k(str).split(''))
+
+			const mergeIndex = _.union(..._.transform(searchStrList, (res, val, key) => {
+				if(typeof this.listIndex[6][key.repeat(val.length)] !== 'undefined'){
+					res.push(this.listIndex[6][key.repeat(val.length)])
 				}
-			}, [])[0]
+			}, []))
 
 			const countList = _.transform(mergeIndex, (res, val) => {
-				res[val] = {'id': val, 'str': this.list[val], 'count': (res[val]?res[val]['count']:0) + 1, 'len': _.uniq(this.list[val].split('')).length}
+				const count = _.reduce(searchStrList, (sum, v, k) => {
+					return sum + (_.indexOf(this.listIndex[6][k.repeat(v.length)], val) > -1 ? v.length: 0)
+				}, 0)
+				res[val] = {'id': val, 'str': this.list[val], 'count': count, 'len': count}
 			}, {})
 
-			const sortedList = _.sortBy(countList, (obj) => {return -(obj.count + obj.len)})
+			const sortedList = _.sortBy(countList, (obj) => {return -obj.count})
 			this.searchList = sortedList
 			// console.log(sortedList)
 		},
