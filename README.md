@@ -1,10 +1,10 @@
 # ことのはたんごサポートツール
 
-単語推理ゲーム「ことのはたんご」 リンク (https://plum-chloride.jp/kotonoha-tango/index.html) の攻略ツールです
+単語推理ゲーム「[ことのはたんご](https://plum-chloride.jp/kotonoha-tango/index.html)」のサポートツール [リンク](https://tango.kedama.info/)
 
 ## ToDo
 
-* 重複文字による絞り込み
+* 重たい処理の軽量化
 
 ## Build Setup
 ``` bash
