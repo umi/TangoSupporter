@@ -18,7 +18,8 @@ export default {
 			searchList: [],
 			inputList: [],
 			inputErr: 0,
-			loading: false
+			loadingAns: false,
+			loadingSearch: false
 		}
 	},
 	props: {
@@ -61,7 +62,7 @@ export default {
 			});
 		},
 		refined() {
-			this.loading = true
+			this.loadingAns = true
 			setTimeout(() => {
 				const selectedObj = this.inputObj
 				const intersection = _.spread(_.intersection)
@@ -109,29 +110,33 @@ export default {
 				this.ansList = _.map(posList, (val) => {
 					return this.list[val]
 				})
-				this.loading = false
+				this.loadingAns = false
 				// console.log(this.ansList.length, this.ansList)
 			}, 0)
 		},
 		search() {
-			const str = this.$refs.searchInput.value
-			const searchStrList = _.groupBy(this.h2k(str).split(''))
+			this.loadingSearch = true
+			setTimeout(() => {
+				const str = this.$refs.searchInput.value
+				const searchStrList = _.groupBy(this.h2k(str).split(''))
 
-			const mergeIndex = _.union(..._.transform(searchStrList, (res, val, key) => {
-				if(typeof this.listIndex[6][key.repeat(val.length)] !== 'undefined'){
-					res.push(this.listIndex[6][key.repeat(val.length)])
-				}
-			}, []))
+				const mergeIndex = _.union(..._.transform(searchStrList, (res, val, key) => {
+					if(typeof this.listIndex[6][key.repeat(val.length)] !== 'undefined'){
+						res.push(this.listIndex[6][key.repeat(val.length)])
+					}
+				}, []))
 
-			const countList = _.transform(mergeIndex, (res, val) => {
-				const count = _.reduce(searchStrList, (sum, v, k) => {
-					return sum + (_.indexOf(this.listIndex[6][k.repeat(v.length)], val) > -1 ? v.length: 0)
-				}, 0)
-				res[val] = {'id': val, 'str': this.list[val], 'count': count, 'len': count}
-			}, {})
+				const countList = _.transform(mergeIndex, (res, val) => {
+					const count = _.reduce(searchStrList, (sum, v, k) => {
+						return sum + (_.indexOf(this.listIndex[6][k.repeat(v.length)], val) > -1 ? v.length: 0)
+					}, 0)
+					res[val] = {'id': val, 'str': this.list[val], 'count': count, 'len': count}
+				}, {})
 
-			const sortedList = _.sortBy(countList, (obj) => {return -obj.count})
-			this.searchList = sortedList
+				const sortedList = _.sortBy(countList, (obj) => {return -obj.count})
+				this.searchList = sortedList
+				this.loadingSearch = false
+			}, 0)
 			// console.log(sortedList)
 		},
 		mergeStatus(objValue, srcValue) {
@@ -248,7 +253,7 @@ export default {
 			<div class="btn">
 				<WordButton :inputList="inputList" :delFunc="delete" :changeFunc="change" :refinedFunc="refined" />
 			</div>
-			<Loading :show="loading" />
+			<Loading :show="loadingAns" />
 			<p>
 				候補:{{ ansList.length }}
 				/ 全単語:{{ list.length }}
@@ -262,6 +267,7 @@ export default {
 				<input class="input_text" placeholder="検索文字入力" type="text" ref="searchInput">
 				<button class="input_button" @click="search">検索</button>
 			</div>
+			<Loading :show="loadingSearch" text="検索中…" />
 			<div class="words">
 				<div v-for="item in displaySearch" @click="copyToClipboard(item.str)" :class="`count${item.count} len${item.len}`">{{ item.str }}</div>
 			</div>
@@ -294,11 +300,6 @@ export default {
 	.btn {
 		max-width: 340px;
 		margin: 0 auto;
-	}
-}
-.searchArea {
-	.inputs {
-		margin-bottom: 32px;
 	}
 }
 .inputs {
