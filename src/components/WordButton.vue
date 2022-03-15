@@ -66,13 +66,13 @@ export default {
 			color: white;
 		}
 		&.state1 {
-			background-color: var(--brow);
-			border: solid 0.15em var(--brow);
+			background-color: rgb(252, 201, 72);
+			border: solid 0.15em rgb(252, 201, 72);
 			color: black;
 		}
 		&.state2 {
-			background-color: var(--hit);
-			border: solid 0.15em var(--hit);
+			background-color: rgb(167,210,141);
+			border: solid 0.15em rgb(167,210,141);
 			color: black;
 		}
 		&.round1 {
