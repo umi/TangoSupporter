@@ -12,7 +12,7 @@ import Footer from './components/Footer.vue'
   <Footer />
 </template>
 
-<style>
+<style lang="scss">
 body {
 	margin: 0;
 	padding: 0;

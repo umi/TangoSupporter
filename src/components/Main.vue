@@ -245,7 +245,9 @@ export default {
 				<input class="input_text" placeholder="回答入力" type="text" maxlength="5" ref="ansInput">
 				<button class="input_button" @click="regist">追加</button>
 			</div>
-			<WordButton :inputList="inputList" :delFunc="delete" :changeFunc="change" :refinedFunc="refined" />
+			<div class="btn">
+				<WordButton :inputList="inputList" :delFunc="delete" :changeFunc="change" :refinedFunc="refined" />
+			</div>
 			<Loading :show="loading" />
 			<p>
 				候補:{{ ansList.length }}
@@ -272,18 +274,27 @@ export default {
 	</div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 .main {
     display: flex;
     justify-content: center;
 	gap: 30px;
 	padding: 10px 0;
 	background: #e4edf1;
+
+	@media screen and (max-width: 700px) {
+		flex-direction: column;
+	}
 }
-.ansArea,
+.answerArea,
 .searchArea {
 	min-width: 340px;
-	max-width: 340px;
+}
+.answerArea {
+	.btn {
+		max-width: 340px;
+		margin: 0 auto;
+	}
 }
 .searchArea {
 	.inputs {
@@ -319,9 +330,10 @@ export default {
     flex-wrap: wrap;
     justify-content: space-between;
     gap: 5px 2px;
-	width: 340px;
+    max-width: 340px;
     font-size: 1.1em;
-	margin-top: 10px;
+    margin: 10px auto 0;
+
 	>div {
 		cursor: pointer;
 		background: #d1e3c6;

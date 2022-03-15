@@ -13,7 +13,7 @@ export default defineComponent({
 	<div id="header">ことのはたんご サポートツール</div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 #header {
 	padding: 10px;
 	color: white;

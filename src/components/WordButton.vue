@@ -31,7 +31,7 @@ export default {
 	</div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 :root {
 	--hit: rgb(167,210,141);
 	--brow: rgb(252, 201, 72);
