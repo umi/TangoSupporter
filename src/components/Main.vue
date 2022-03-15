@@ -66,31 +66,42 @@ export default {
 				const selectedObj = this.inputObj
 				const intersection = _.spread(_.intersection)
 				const union = _.spread(_.union)
-				const listIndex = _.cloneDeep(this.listIndex[5])
 				const [allPosList, allDelList] = _.transform(selectedObj, (result, value, key) => {
 					if(value[0] == 1){
-						if(_.indexOf(value[1], 2) > -1){
-							_.forEach(value[1], (v, k) => {
-								if(v === 2){
-									result[0].push(this.listIndex[k][key])
-									result[1].push(_.pullAll(listIndex, this.listIndex[k][key]))
-								}
-							})
-						}else{
-							const tmpList = _.transform(value[1], (res, v, k) => {
-								if(v === 1){
-									result[1].push(this.listIndex[k][key])
-								}else{
-									res.push(this.listIndex[k][key])
-								}
-							}, [])
-							result[0].push(union(tmpList))
+						if(value[2][0] > 1){
+							console.log(this.listIndex[6][key.repeat(value[2][0])])
+							result[0].push(this.listIndex[6][key.repeat(value[2][0])])
+						}
+						if(value[2][1] > 0){
+							const reject = this.listIndex[6][key.repeat(value[2][1] + 1)]
+							console.log(reject)
+							if(reject){
+								result[1].push(reject)
+							}
+						}
+						const pending = _.indexOf(value[1], 1) > -1
+						_.forEach(value[1], (v, k) => {
+							if(v === 2){
+								result[0].push(this.listIndex[k][key])
+								result[1].push(_.filter(this.listIndex[5], o => _.indexOf(this.listIndex[k][key], o) === -1))
+							}
+						})
+						const tmpList = union(_.transform(value[1], (res, v, k) => {
+							if(v === 1){
+								result[1].push(this.listIndex[k][key])
+							}else if(pending){
+								res.push(this.listIndex[k][key])
+							}
+						}, []))
+						if(tmpList.length){
+							result[0].push(tmpList)
 						}
 					}else{
 						result[1].push(this.listIndex[6][key])
 					}
 				}, [[], []])
-				const posList = allPosList.length ? intersection(allPosList): listIndex
+				console.log(allPosList, allDelList)
+				const posList = allPosList.length ? intersection(allPosList): this.listIndex[5]
 				const delList = union(allDelList)
 
 				_.pullAll(posList, delList)
@@ -163,11 +174,18 @@ export default {
 		listIndex() {
 			const list = _.transform(this.list, (res, val, key) => {
 				res[5].push(key)
-				_.forEach(val.split(''), (v, k) => {
+				const words = val.split('')
+				_.forEach(words, (v, k) => {
 					if(typeof res[k][v] === 'undefined'){ res[k][v] = [] }
 					res[k][v].push(key)
-					if(typeof res[6][v] === 'undefined'){ res[6][v] = [] }
-					res[6][v].push(key)
+					if(_.indexOf(words, v) === k){
+						const picks = _.filter(words, o => o === v)
+						_.forEach(picks, (char, index) => {
+							const word = char.repeat(index + 1)
+							if(typeof res[6][word] === 'undefined'){ res[6][word] = [] }
+							res[6][word].push(key)
+						})
+					}
 				})
 			}, [{}, {}, {}, {}, {}, [], {}])
 			// console.log(list)
@@ -176,23 +194,32 @@ export default {
 		},
 		inputObj() {
 			return _.transform(this.inputList, (result, value) => {
-				_.forEach(value[0].split(''), (val, key) => {
-					switch(value[1][key]){
-						case 0:
-							if(!result[val]){
-								result[val] = [0]
+				const words = value[0].split('')
+				_.forEach(words, (val, key) => {
+					if(_.indexOf(words, val) === key){
+						let picks = _.map(words, (v, k) => {
+							return v === val ? value[1][k]: null
+						})
+						const groups = _.groupBy(picks)
+						const len = [1, 0]
+						const hit = (groups[1] ? groups[1].length: 0) + (groups[2] ? groups[2].length: 0)
+						if(!groups[null] || words.length - groups[null].length > 0){
+							if(hit > 0){
+								len[0] = hit
+								if(!!groups[0]){
+									len[1] = hit
+								}
+								if(!!groups[1]){
+									picks = _.map(picks, v => v === 0 ? 1: v)
+								}
 							}
-							break
-						case 1:
-						case 2:
-							if(!result[val] || result[val][0] === 0){
-								result[val] = [1, _.fill([0,0,0,0,0], value[1][key], key, key+1)]
-							}else{
-								result[val] = [1, _.fill(result[val][1], Math.max(result[val][1][key], value[1][key]), key, key+1)]
-							}
-							break
-						default:
-							break
+						}
+
+						if(!result[val] || result[val][0] === 0){
+							result[val] = hit > 0 ? [1, _.unzipWith([[0,0,0,0,0], picks], Math.max), len] : [0]
+						}else{
+							result[val] = [1, _.unzipWith([result[val][1], picks], Math.max), _.unzipWith([result[val][2], len], Math.max)]
+						}
 					}
 				})
 			}, {})
