@@ -12,6 +12,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^2.2.0",
+    "dayjs": "^1.11.0",
     "lodash": "^4.17.21",
     "sass": "^1.49.9",
     "sass-loader": "^12.6.0",

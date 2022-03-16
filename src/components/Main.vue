@@ -1,5 +1,6 @@
 <script>
 import _ from 'lodash'
+import dayjs from 'dayjs'
 import WordButton from './WordButton.vue'
 import Loading from './Loading.vue'
 
@@ -26,12 +27,14 @@ export default {
 	},
 	methods: {
 		getData() {
-			fetch('https://raw.githubusercontent.com/plumchloride/tango/main/kotonoha-tango/public/data/A_data_new.csv')
+			// const url = 'https://raw.githubusercontent.com/plumchloride/tango/main/kotonoha-tango/public/data/A_data_new.csv'
+			const url = 'https://plum-chloride.jp/kotonoha-tango/public/data/A_data_new.csv?ver=' + dayjs().format('YYYYMMDD')
+			fetch(url)
 				.then(res => {
 					return res.text()
 				})
 				.then(data => {
-					this.list = _.uniq(data.split("\n"))
+					this.list = _.uniq(data.split(/\r\n|\n/))
 				})
 		},
 		regist() {
