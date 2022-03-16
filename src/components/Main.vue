@@ -68,8 +68,6 @@ export default {
 			this.loadingAns = true
 			setTimeout(() => {
 				const selectedObj = this.inputObj
-				const intersection = _.spread(_.intersection)
-				const union = _.spread(_.union)
 				const [allPosList, allDelList] = _.transform(selectedObj, (result, value, key) => {
 					if(value[0] == 1){
 						if(value[2][0] > 1){
@@ -84,13 +82,15 @@ export default {
 							}
 						}
 						const pending = _.indexOf(value[1], 1) > -1
+						console.time('for')
 						_.forEach(value[1], (v, k) => {
 							if(v === 2){
 								result[0].push(this.listIndex[k][key])
-								result[1].push(_.filter(this.listIndex[5], o => _.indexOf(this.listIndex[k][key], o) === -1))
+								result[1].push(this.listIndex[7][k].filter(o => this.listIndex[k][key].indexOf(o) === -1))
 							}
 						})
-						const tmpList = union(_.transform(value[1], (res, v, k) => {
+						console.timeEnd('for')
+						const tmpList = _.union(..._.transform(value[1], (res, v, k) => {
 							if(v === 1){
 								result[1].push(this.listIndex[k][key])
 							}else if(pending){
@@ -105,12 +105,14 @@ export default {
 					}
 				}, [[], []])
 				console.log(allPosList, allDelList)
-				const posList = allPosList.length ? intersection(allPosList): this.listIndex[5]
-				const delList = union(allDelList)
+				const posList = allPosList.length ? _.intersection(...allPosList): this.listIndex[5]
+				const delList = _.union(...allDelList)
 
-				_.pullAll(posList, delList)
-				const num = posList.length
-				this.ansList = _.map(posList, (val) => {
+				console.time('filter')
+				const filList = posList.filter(i => delList.indexOf(i) === -1)
+				console.timeEnd('filter')
+				const num = filList.length
+				this.ansList = _.map(filList, (val) => {
 					return this.list[val]
 				})
 				this.loadingAns = false
@@ -123,18 +125,22 @@ export default {
 				const str = this.$refs.searchInput.value
 				const searchStrList = _.groupBy(this.h2k(str).split(''))
 
+				console.time('create mergeIndex')
 				const mergeIndex = _.union(..._.transform(searchStrList, (res, val, key) => {
 					if(typeof this.listIndex[6][key.repeat(val.length)] !== 'undefined'){
 						res.push(this.listIndex[6][key.repeat(val.length)])
 					}
 				}, []))
+				console.timeEnd('create mergeIndex')
 
+				console.time('create countList')
 				const countList = _.transform(mergeIndex, (res, val) => {
 					const count = _.reduce(searchStrList, (sum, v, k) => {
-						return sum + (_.indexOf(this.listIndex[6][k.repeat(v.length)], val) > -1 ? v.length: 0)
+						return sum + (this.listIndex[6][k.repeat(v.length)].indexOf(val) !== -1 ? v.length: 0)
 					}, 0)
 					res[val] = {'id': val, 'str': this.list[val], 'count': count, 'len': count}
 				}, {})
+				console.timeEnd('create countList')
 
 				const sortedList = _.sortBy(countList, (obj) => {return -obj.count})
 				this.searchList = sortedList
@@ -190,6 +196,8 @@ export default {
 				_.forEach(words, (v, k) => {
 					if(typeof res[k][v] === 'undefined'){ res[k][v] = [] }
 					res[k][v].push(key)
+					if(typeof res[7][k] === 'undefined'){ res[7][k] = [] }
+					res[7][k].push(key)
 					if(_.indexOf(words, v) === k){
 						const picks = _.filter(words, o => o === v)
 						_.forEach(picks, (char, index) => {
@@ -199,7 +207,7 @@ export default {
 						})
 					}
 				})
-			}, [{}, {}, {}, {}, {}, [], {}])
+			}, [{}, {}, {}, {}, {}, [], {}, {}])
 			// console.log(list)
 
 			return list
