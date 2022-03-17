@@ -3,194 +3,73 @@ import _ from 'lodash'
 import dayjs from 'dayjs'
 import WordButton from './WordButton.vue'
 import Loading from './Loading.vue'
+import { onMounted, ref, computed } from 'vue'
 
 export default {
-	expose: [
-		'getData'
-	],
 	components: {
 		WordButton,
 		Loading
 	},
-	data() {
-		return {
-			list: [],
-			ansList: [],
-			searchList: [],
-			inputList: [],
-			inputErr: 0,
-			loadingAns: false,
-			loadingSearch: false
-		}
-	},
-	props: {
-	},
-	methods: {
-		getData() {
-			// const url = 'https://raw.githubusercontent.com/plumchloride/tango/main/kotonoha-tango/public/data/A_data_new.csv'
+	setup() {
+		const list = ref([])
+		const ansList = ref([])
+		const ansInput = ref(null)
+		const searchList = ref([])
+		const searchInput = ref(null)
+		const inputList = ref([])
+		const inputErr = ref(false)
+		const loadingAns = ref(false)
+		const loadingSearch = ref(false)
+
+		const getData = () => {
 			const url = 'https://plum-chloride.jp/kotonoha-tango/public/data/A_data_new.csv?ver=' + dayjs().format('YYYYMMDD')
 			fetch(url)
 				.then(res => {
 					return res.text()
 				})
 				.then(data => {
-					this.list = _.uniq(data.split(/\r\n|\n/))
+					list.value = _.uniq(data.split(/\r\n|\n/))
 				})
-		},
-		regist() {
-			// console.log(this.$refs.ansInput.value)
-			if(typeof this.$refs.ansInput.value === 'string' && this.$refs.ansInput.value.length === 5){
-				const registStr = this.h2k(this.$refs.ansInput.value)
-				if(_.indexOf(this.list, registStr) > -1){
-					this.inputList.push([registStr, [0,0,0,0,0]])
-					this.$refs.ansInput.value = ''
-					return
-				}
-			}
+		}
 
-			this.showInputErr()
-		},
-		delete(index) {
-			this.inputList.splice(index, 1)
-		},
-		change(index, num) {
-			if(_.isArray(this.inputList[index]) && _.isArray(this.inputList[index][1])){
-				this.inputList[index][1][num] = (this.inputList[index][1][num] + 1) % 3
-			}
-		},
-		h2k(str) {
+		const h2k = (str) => {
 			return str.replace(/[\u3041-\u3096]/g, function(match) {
 				var chr = match.charCodeAt(0) + 0x60;
 				return String.fromCharCode(chr);
 			});
-		},
-		refined() {
-			this.loadingAns = true
-			setTimeout(() => {
-				const selectedObj = this.inputObj
-				const [allPosList, allDelList] = _.transform(selectedObj, (result, value, key) => {
-					if(value[0] == 1){
-						if(value[2][0] > 1){
-							console.log(this.listIndex[6][key.repeat(value[2][0])])
-							result[0].push(this.listIndex[6][key.repeat(value[2][0])])
-						}
-						if(value[2][1] > 0){
-							const reject = this.listIndex[6][key.repeat(value[2][1] + 1)]
-							console.log(reject)
-							if(reject){
-								result[1].push(reject)
-							}
-						}
-						const pending = _.indexOf(value[1], 1) > -1
-						console.time('for')
-						_.forEach(value[1], (v, k) => {
-							if(v === 2){
-								result[0].push(this.listIndex[k][key])
-								result[1].push(this.listIndex[7][k].filter(o => this.listIndex[k][key].indexOf(o) === -1))
-							}
-						})
-						console.timeEnd('for')
-						const tmpList = _.union(..._.transform(value[1], (res, v, k) => {
-							if(v === 1){
-								result[1].push(this.listIndex[k][key])
-							}else if(pending){
-								res.push(this.listIndex[k][key])
-							}
-						}, []))
-						if(tmpList.length){
-							result[0].push(tmpList)
-						}
-					}else{
-						result[1].push(this.listIndex[6][key])
-					}
-				}, [[], []])
-				console.log(allPosList, allDelList)
-				const posList = allPosList.length ? _.intersection(...allPosList): this.listIndex[5]
-				const delList = _.union(...allDelList)
+		}
 
-				console.time('filter')
-				const filList = posList.filter(i => delList.indexOf(i) === -1)
-				console.timeEnd('filter')
-				const num = filList.length
-				this.ansList = _.map(filList, (val) => {
-					return this.list[val]
-				})
-				this.loadingAns = false
-				// console.log(this.ansList.length, this.ansList)
-			}, 0)
-		},
-		search() {
-			this.loadingSearch = true
-			setTimeout(() => {
-				const str = this.$refs.searchInput.value
-				const searchStrList = _.groupBy(this.h2k(str).split(''))
+		const showInputErr = () => {
+			inputErr.value = true
+			setTimeout(() => {inputErr.value = false}, 3000)
+		}
 
-				console.time('create mergeIndex')
-				const mergeIndex = _.union(..._.transform(searchStrList, (res, val, key) => {
-					if(typeof this.listIndex[6][key.repeat(val.length)] !== 'undefined'){
-						res.push(this.listIndex[6][key.repeat(val.length)])
-					}
-				}, []))
-				console.timeEnd('create mergeIndex')
-
-				console.time('create countList')
-				const countList = _.transform(mergeIndex, (res, val) => {
-					const count = _.reduce(searchStrList, (sum, v, k) => {
-						return sum + (this.listIndex[6][k.repeat(v.length)].indexOf(val) !== -1 ? v.length: 0)
-					}, 0)
-					res[val] = {'id': val, 'str': this.list[val], 'count': count, 'len': count}
-				}, {})
-				console.timeEnd('create countList')
-
-				const sortedList = _.sortBy(countList, (obj) => {return -obj.count})
-				this.searchList = sortedList
-				this.loadingSearch = false
-			}, 0)
-			// console.log(sortedList)
-		},
-		mergeStatus(objValue, srcValue) {
-			if(_.isArray(objValue)){
-				if(objValue[0] === 0){
-					return srcValue
-				}else if(srcValue[0] === 1){
-					return [1, _.map(objValue[1], (v, k) => {
-						return Math.max(v, srcValue[1][k])
-					})]
+		const registItem = () => {
+			// console.log(ansInput.value)
+			if(typeof ansInput.value.value === 'string' && ansInput.value.value.length === 5){
+				const registStr = h2k(ansInput.value.value)
+				if(_.indexOf(list.value, registStr) > -1){
+					inputList.value.push([registStr, [0,0,0,0,0]])
+					ansInput.value.value = ''
+					return
 				}
 			}
-		},
-		showInputErr() {
-			this.inputErr = 1
-			setTimeout(() => {this.inputErr = 0}, 3000)
-		},
-		copyToClipboard(text) {
-			navigator.clipboard.writeText(text)
-				.then(() => {
-					console.log(`copied: ${text}`)
-				})
-				.catch(e => {
-					console.error(e)
-				})
+
+			showInputErr()
 		}
-	},
-	mounted() {
-		this.getData()
-		this.$refs.ansInput.onkeypress = (e) => {
-			const key = e.keyCode || e.charCode || 0
-			if(key == 13){
-				this.regist()
+
+		const deleteItem = (index) => {
+			inputList.value.splice(index, 1)
+		}
+
+		const changeItem = (index, num) => {
+			if(_.isArray(inputList.value[index]) && _.isArray(inputList.value[index][1])){
+				inputList.value[index][1][num] = (inputList.value[index][1][num] + 1) % 3
 			}
 		}
-		this.$refs.searchInput.onkeypress = (e) => {
-			const key = e.keyCode || e.charCode || 0
-			if(key == 13){
-				this.search()
-			}
-		}
-	},
-	computed: {
-		listIndex() {
-			const list = _.transform(this.list, (res, val, key) => {
+
+		const indexList = computed(() => {
+			const indexList = _.transform(list.value, (res, val, key) => {
 				res[5].push(key)
 				const words = val.split('')
 				_.forEach(words, (v, k) => {
@@ -210,10 +89,11 @@ export default {
 			}, [{}, {}, {}, {}, {}, [], {}, {}])
 			// console.log(list)
 
-			return list
-		},
-		inputObj() {
-			return _.transform(this.inputList, (result, value) => {
+			return indexList
+		})
+
+		const inputObj = computed(() => {
+			return _.transform(inputList.value, (result, value) => {
 				const words = value[0].split('')
 				_.forEach(words, (val, key) => {
 					if(_.indexOf(words, val) === key){
@@ -243,12 +123,148 @@ export default {
 					}
 				})
 			}, {})
-		},
-		displayAns() {
-			return this.ansList.slice(0, 87)
-		},
-		displaySearch() {
-			return this.searchList.slice(0, 99)
+		})
+
+		const displayAns = computed(() => {
+			return ansList.value.slice(0, 87)
+		})
+		const displaySearch = computed(() => {
+			return searchList.value.slice(0, 99)
+		})
+
+		// 候補絞り込み
+		const refined = () => {
+			loadingAns.value = true
+			ansList.value = []
+			setTimeout(() => {
+				const selectedObj = inputObj.value
+				const [allPosList, allDelList] = _.transform(selectedObj, (result, value, key) => {
+					if(value[0] == 1){
+						if(value[2][0] > 1){
+							console.log(indexList.value[6][key.repeat(value[2][0])])
+							result[0].push(indexList.value[6][key.repeat(value[2][0])])
+						}
+						if(value[2][1] > 0){
+							const reject = indexList.value[6][key.repeat(value[2][1] + 1)]
+							console.log(reject)
+							if(reject){
+								result[1].push(reject)
+							}
+						}
+						const pending = _.indexOf(value[1], 1) > -1
+						console.time('for')
+						_.forEach(value[1], (v, k) => {
+							if(v === 2){
+								result[0].push(indexList.value[k][key])
+								result[1].push(indexList.value[7][k].filter(o => indexList.value[k][key].indexOf(o) === -1))
+							}
+						})
+						console.timeEnd('for')
+						const tmpList = _.union(..._.transform(value[1], (res, v, k) => {
+							if(v === 1){
+								result[1].push(indexList.value[k][key])
+							}else if(pending){
+								res.push(indexList.value[k][key])
+							}
+						}, []))
+						if(tmpList.length){
+							result[0].push(tmpList)
+						}
+					}else{
+						result[1].push(indexList.value[6][key])
+					}
+				}, [[], []])
+				console.log(allPosList, allDelList)
+				const posList = allPosList.length ? _.intersection(...allPosList): indexList.value[5]
+				const delList = _.union(...allDelList)
+
+				console.time('filter')
+				const filList = posList.filter(i => delList.indexOf(i) === -1)
+				console.timeEnd('filter')
+				const num = filList.length
+				ansList.value = _.map(filList, (val) => {
+					return list.value[val]
+				})
+				loadingAns.value = false
+				// console.log(ansList.value.length, ansList.value)
+			}, 0)
+		}
+
+		// 検索処理
+		const search = () => {
+			loadingSearch.value = true
+			searchList.value = []
+			setTimeout(() => {
+				const str = searchInput.value.value
+				const searchStrList = _.groupBy(h2k(str).split(''))
+
+				console.time('create mergeIndex')
+				const mergeIndex = _.union(..._.transform(searchStrList, (res, val, key) => {
+					if(typeof indexList.value[6][key.repeat(val.length)] !== 'undefined'){
+						res.push(indexList.value[6][key.repeat(val.length)])
+					}
+				}, []))
+				console.timeEnd('create mergeIndex')
+
+				console.time('create countList')
+				const countList = _.transform(mergeIndex, (res, val) => {
+					const count = _.reduce(searchStrList, (sum, v, k) => {
+						return sum + (indexList.value[6][k.repeat(v.length)].indexOf(val) !== -1 ? v.length: 0)
+					}, 0)
+					res[val] = {'id': val, 'str': list.value[val], 'count': count, 'len': count}
+				}, {})
+				console.timeEnd('create countList')
+
+				const sortedList = _.sortBy(countList, (obj) => {return -obj.count})
+				searchList.value = sortedList
+				loadingSearch.value = false
+			}, 0)
+			// console.log(sortedList)
+		}
+
+		const copyToClipboard = (text) => {
+			navigator.clipboard.writeText(text)
+				.then(() => {
+					console.log(`copied: ${text}`)
+				})
+				.catch(e => {
+					console.error(e)
+				})
+		}
+
+		onMounted(() => {
+			getData()
+			ansInput.value.onkeypress = (e) => {
+				const key = e.keyCode || e.charCode || 0
+				if(key == 13){
+					registItem()
+				}
+			}
+			searchInput.value.onkeypress = (e) => {
+				const key = e.keyCode || e.charCode || 0
+				if(key == 13){
+					search()
+				}
+			}
+		})
+
+		return {
+			list,
+			ansInput,
+			ansList,
+			searchInput,
+			registItem,
+			inputList,
+			deleteItem,
+			changeItem,
+			refined,
+			search,
+			copyToClipboard,
+			loadingAns,
+			loadingSearch,
+			displaySearch,
+			displayAns,
+			inputErr
 		}
 	}
 }
@@ -259,10 +275,10 @@ export default {
 		<div class="answerArea">
 			<div class="inputs">
 				<input class="input_text" placeholder="回答入力" type="text" maxlength="5" ref="ansInput">
-				<button class="input_button" @click="regist">追加</button>
+				<button class="input_button" @click="registItem">追加</button>
 			</div>
 			<div class="btn">
-				<WordButton :inputList="inputList" :delFunc="delete" :changeFunc="change" :refinedFunc="refined" />
+				<WordButton :inputList="inputList" :delFunc="deleteItem" :changeFunc="changeItem" :refinedFunc="refined" />
 			</div>
 			<Loading :show="loadingAns" />
 			<p>
@@ -284,7 +300,7 @@ export default {
 			</div>
 		</div>
 	</div>
-	<div :class="[inputErr === 1 ? 'alert': 'alert non_visi']">
+	<div :class="[inputErr ? 'alert': 'alert non_visi']">
 		<div>
 			<p id="alert_text">注意<br>ことのはアプリの辞書内の単語を記入して下さい</p>
 		</div>

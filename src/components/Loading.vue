@@ -1,7 +1,5 @@
 <script>
-import {defineComponent, ref} from 'vue'
-
-export default defineComponent({
+export default ({
 	props: {
 		show: {
 			type: Boolean,
@@ -12,10 +10,8 @@ export default defineComponent({
 			default: '集計中…'
 		}
 	},
-	setup(props) {
-		return {
-			props
-		}
+	setup() {
+		return {}
 	}
 })
 </script>

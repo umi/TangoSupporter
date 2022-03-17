@@ -1,10 +1,7 @@
 <script>
-import {defineComponent, ref} from 'vue'
-
-export default defineComponent({
-	setup(props) {
-		return {
-		}
+export default ({
+	setup() {
+		return {}
 	}
 })
 </script>

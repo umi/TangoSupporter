@@ -12,11 +12,8 @@ export default {
 		changeFunc: Function,
 		refinedFunc: Function
 	},
-	methods: {
-	},
-	mounted() {
-	},
-	computed: {
+	setup() {
+		return {}
 	}
 }
 </script>
