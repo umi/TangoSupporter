@@ -75,8 +75,6 @@ export default {
 				_.forEach(words, (v, k) => {
 					if(typeof res[k][v] === 'undefined'){ res[k][v] = [] }
 					res[k][v].push(key)
-					if(typeof res[7][k] === 'undefined'){ res[7][k] = [] }
-					res[7][k].push(key)
 					if(_.indexOf(words, v) === k){
 						const picks = _.filter(words, o => o === v)
 						_.forEach(picks, (char, index) => {
@@ -86,7 +84,7 @@ export default {
 						})
 					}
 				})
-			}, [{}, {}, {}, {}, {}, [], {}, {}])
+			}, [{}, {}, {}, {}, {}, [], {}])
 			// console.log(list)
 
 			return indexList
@@ -156,7 +154,7 @@ export default {
 						_.forEach(value[1], (v, k) => {
 							if(v === 2){
 								result[0].push(indexList.value[k][key])
-								result[1].push(indexList.value[7][k].filter(o => indexList.value[k][key].indexOf(o) === -1))
+								result[1].push(indexList.value[5].filter(o => indexList.value[k][key].indexOf(o) === -1))
 							}
 						})
 						console.timeEnd('for')
